@@ -14,6 +14,7 @@ namespace data_classifier
     public partial class Form1 : Form
     {
         int currentFile = -1;
+        string currentFilePath = "";
         int yesFileCount = 0;
         int noFileCount = 0;
         HashSet<string> yesFiles = new HashSet<string>();
@@ -58,15 +59,15 @@ namespace data_classifier
                 return;
             }
 
-            pictureBox1.Load(next);
-            fileLabel.Text = pictureBox1.ImageLocation;
+            pictureBox1.Image = getImageCopy(next);
+            fileLabel.Text = currentFilePath;
             // +1 because count starts from 0, want to display from 1
             currentFileNumberLabel.Text = (currentFile+1).ToString();
         }
 
         void showFirstFile()
         {
-            pictureBox1.Load(Directory.EnumerateFiles(sourceDirectoryBrowser.SelectedPath).First());
+            pictureBox1.Image = getImageCopy(Directory.EnumerateFiles(sourceDirectoryBrowser.SelectedPath).First());
             currentFile = 0;
             currentFileNumberLabel.Text = (currentFile + 1).ToString();
         }
@@ -79,10 +80,20 @@ namespace data_classifier
                 fileLabel.Text = "BEGINNING OF FILES";
                 return;
             }
-            pictureBox1.Load(prev);
-            fileLabel.Text = pictureBox1.ImageLocation;
+            pictureBox1.Image = getImageCopy(prev);
+            fileLabel.Text = currentFilePath;
             // +1 because count starts from 0, want to display from 1
             currentFileNumberLabel.Text = (currentFile+1).ToString();
+        }
+
+        private Image getImageCopy(string path)
+        {
+            using (Image im = Image.FromFile(path))
+            {
+                currentFilePath = path;
+                return new Bitmap(im);
+            }
+            
         }
 
         string nextFile(string path)
@@ -112,18 +123,18 @@ namespace data_classifier
 
         private void yesButton_Click(object sender, EventArgs e)
         {
-            if (noFiles.Remove(pictureBox1.ImageLocation))
+            if (noFiles.Remove(currentFilePath))
                 incrementNoFileCount(-1);
-            if(yesFiles.Add(pictureBox1.ImageLocation))
+            if(yesFiles.Add(currentFilePath))
                 incrementYesFileCount(1);
             showNextFile();
         }
 
         private void noButton_Click(object sender, EventArgs e)
         {
-            if (yesFiles.Remove(pictureBox1.ImageLocation))
+            if (yesFiles.Remove(currentFilePath))
                 incrementYesFileCount(-1);
-            if (noFiles.Add(pictureBox1.ImageLocation))
+            if (noFiles.Add(currentFilePath))
                 incrementNoFileCount(1);
             showNextFile();
         }
@@ -152,7 +163,7 @@ namespace data_classifier
 
         private void moveFiles()
         {
-            pictureBox1.Image = null;
+
             foreach (string file in yesFiles)
             {
                 File.Move(file, yesDirectoryBrowser.SelectedPath + "\\" + Path.GetFileName(file));
@@ -173,9 +184,9 @@ namespace data_classifier
         private void undoButton_Click(object sender, EventArgs e)
         {
             showPrevFile();
-            if (yesFiles.Remove(pictureBox1.ImageLocation))
+            if (yesFiles.Remove(currentFilePath))
                 incrementYesFileCount(-1);
-            else if (noFiles.Remove(pictureBox1.ImageLocation))
+            else if (noFiles.Remove(currentFilePath))
                 incrementNoFileCount(-1);
         }
 
